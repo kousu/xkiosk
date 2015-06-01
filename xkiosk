@@ -1,0 +1,78 @@
+#!/bin/sh
+# usage: xkiosk [-f] [program]
+# 
+# In theory, you can make a simple locked-down kiosk out of X by putting
+#   exec [program]
+# in your .xinitrc. But except for Chromium, most programs behave really
+# poorly with no window manager. Here I present a kiosk made by declawing i3.
+# 
+# To build a full kiosk, you will need to combine this with memfs home directories
+# and probably special configuration of the software you're running under the kiosk
+# (e.g. to disable making new windows, network access, etc) and to make it start
+# fullscreen, and xidle(1) or similar to kill idle sessions.
+# 
+# This is not security tested. I do not know of any way to break out of the kiosk,
+# however depending on what you run under it it would not be hard for a user to get at i3-msg(1).
+# 
+# Requires:
+# - i3
+# - pango font
+# 
+# Example usages:
+# 
+# With startx:
+#   $ cat ~/.xinitrc
+#   exec xkiosk -f qemu -hda ~/VMs/Windows.img -m 2G
+# 
+# With a display manager (GDM, XDM, KDM, LightDM, Slim, ...):
+#   $ cat /usr/share/xsessions/firefox.desktop
+#   [Desktop Entry]
+#   Name=Firefox
+#   Comment=firefox
+#   Exec=xkiosk firefox
+#   TryExec=firefox
+#   Type=Application
+#   X-LightDM-DesktopName=Firefox
+#   DesktopNames=Firefox
+# 
+# <nick@kousu.ca>
+
+
+# make an almost-empty i3 config file
+# by being empty, there are no i3 keybindings and therefore no way for the user to control i3
+# unless they manage to get a shell (
+# remove the statusbar
+CONFIG=`mktemp`
+cat > $CONFIG <<EOF
+# disable keybindings
+# (by not writing any)
+
+# disable titlebars
+# there isn't any way to totally disable them afaik
+# but we can make them reallllly smalllllll (because it's .ttf)
+font pango:monospace 0
+bindsym button2 nop  # disable clicks on titlebars
+
+# in new windows do happen, make them tabbed
+# but by disabling clicks on titlebars they cannot be switched between
+workspace_layout tabbed
+
+## disable borders around windows
+new_window none
+new_float none
+
+# hide the status bar
+# XXX a very recent change to i3 changed from workspace_bar no -> bar { mode invisible } being the way to hide the bar.
+bar { mode invisible }
+
+EOF
+
+
+
+# now run i3, but unlike a typicial .xinitrc, i3 is not the last call.
+# instead we exec $@ because we the user quitting that to quit the session.
+# (i3 will kill itself when the X session dies, because it will have nothing to manage)
+i3 -c $CONFIG &
+
+# call the user given program
+$@
