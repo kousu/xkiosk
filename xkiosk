@@ -1,5 +1,5 @@
 #!/bin/sh
-# usage: xkiosk [-f] [program]
+# usage: xkiosk [program]
 # 
 # In theory, you can make a simple locked-down kiosk out of X by putting
 #   exec [program]
@@ -22,7 +22,7 @@
 # 
 # With startx:
 #   $ cat ~/.xinitrc
-#   exec xkiosk -f qemu -hda ~/VMs/Windows.img -m 2G
+#   exec xkiosk qemu -hda ~/VMs/Windows.img -m 2G
 # 
 # With a display manager (GDM, XDM, KDM, LightDM, Slim, ...):
 #   $ cat /usr/share/xsessions/firefox.desktop
